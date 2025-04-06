@@ -1,4 +1,5 @@
-# Tic Tac Toe made using Pygame.
-A well known two player game made using Python and Pygame.
+Special thanks to
 
-The game is finished. It has a win and a draw condition. If i enconter any bugs, I will give my best to fix them.
+https://www.datacamp.com/tutorial/minimax-algorithm-for-ai-in-python for the Minimax implementation
+
+and https://github.com/daliborstakic/tictactoe-pygame for the tic tac toe pygame!
