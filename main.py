@@ -5,8 +5,10 @@ import minimax_algo
 pygame.init()
 
 # Screen
-WIDTH = 900
-ROWS = 3
+WIDTH = 440
+ROWS = 4
+# WIDTH = 600
+# ROWS = 3
 win = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("TicTacToe")
 
@@ -18,8 +20,9 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 # Images
-X_IMAGE = pygame.transform.scale(pygame.image.load("images/x.png"), (80, 80))
-O_IMAGE = pygame.transform.scale(pygame.image.load("images/o.png"), (80, 80))
+box_size = WIDTH // ROWS  # Dynamically calculate the box size
+X_IMAGE = pygame.transform.scale(pygame.image.load("images/x.png"), (box_size - 20, box_size - 20))
+O_IMAGE = pygame.transform.scale(pygame.image.load("images/o.png"), (box_size - 20, box_size - 20))
 
 # Fonts
 END_FONT = pygame.font.SysFont('arial', 40)
@@ -35,15 +38,14 @@ def draw_grid():
     for i in range(ROWS):
         x = i * gap
 
-        pygame.draw.line(win, GRAY, (x, 0), (x, WIDTH), 3)
-        pygame.draw.line(win, GRAY, (0, x), (WIDTH, x), 3)
+        pygame.draw.line(win, GRAY, (x, 0), (x, WIDTH), ROWS)
+        pygame.draw.line(win, GRAY, (0, x), (WIDTH, x), ROWS)
 
 
 def initialize_grid():
     dis_to_cen = WIDTH // ROWS // 2
 
-    # Initializing the array
-    game_array = [[None, None, None], [None, None, None], [None, None, None]]
+    game_array = [[None for _ in range(ROWS)] for _ in range(ROWS)]
 
     for i in range(len(game_array)):
         for j in range(len(game_array[i])):
@@ -59,27 +61,27 @@ def initialize_grid():
 def click(game_array):
     global x_turn, o_turn, images
 
-    # Mouse position
+    # Get mouse position
     m_x, m_y = pygame.mouse.get_pos()
 
     for i in range(len(game_array)):
         for j in range(len(game_array[i])):
             x, y, char, can_play = game_array[i][j]
 
-            # Distance between mouse and the centre of the square
+            # Calculate the distance between the mouse click and the center of the box
             dis = math.sqrt((x - m_x) ** 2 + (y - m_y) ** 2)
 
-            # If it's inside the square
+            # Check if the click is within the box
             if dis < WIDTH // ROWS // 2 and can_play:
                 images.append((x, y, X_IMAGE))
                 x_turn = False
                 o_turn = True
                 game_array[i][j] = (x, y, 'x', False)
 
-                # Get best move from AI
+                # Get the best move from the AI
                 best_move = minimax_algo.TicTacToe(game_array).get_best_move()
 
-                if best_move != None:
+                if best_move is not None:
                     row, col = best_move
                     x_ai, y_ai, _, _ = game_array[row][col]
 
@@ -92,27 +94,55 @@ def click(game_array):
 # Checking if someone has won
 def has_won(game_array):
     # Checking rows
-    for row in range(len(game_array)):
-        if (game_array[row][0][2] == game_array[row][1][2] == game_array[row][2][2]) and game_array[row][0][2] != "":
-            display_message(game_array[row][0][2].upper() + " has won!")
+    for i in range(len(game_array)):
+        points = 0
+        for j in range(len(game_array)):
+            if game_array[i][j][2] == 'o':
+                points -= 1
+            elif game_array[i][j][2] == 'x':
+                points += 1
+            if points == len(game_array):
+                display_message("X has won!")
+                return True
+            elif points == -len(game_array):
+                display_message("O has won!")
+                return True
+        points = 0
+        for j in range(len(game_array)):
+            if game_array[j][i][2] == 'o':
+                points -= 1
+            elif game_array[j][i][2] == 'x':
+                points += 1
+            if points == len(game_array):
+                display_message("X has won!")
+                return True
+            elif points == -len(game_array):
+                display_message("O has won!")
+                return True
+    points = 0
+    for i in range(len(game_array)):    
+        if game_array[i][i][2] == 'o':
+            points -= 1
+        elif game_array[i][i][2] == 'x':
+            points += 1
+        if points == len(game_array):
+            display_message("X has won!")
             return True
-
-    # Checking columns
-    for col in range(len(game_array)):
-        if (game_array[0][col][2] == game_array[1][col][2] == game_array[2][col][2]) and game_array[0][col][2] != "":
-            display_message(game_array[0][col][2].upper() + " has won!")
+        elif points == -len(game_array):
+            display_message("O has won!")
             return True
-
-    # Checking main diagonal
-    if (game_array[0][0][2] == game_array[1][1][2] == game_array[2][2][2]) and game_array[0][0][2] != "":
-        display_message(game_array[0][0][2].upper() + " has won!")
-        return True
-
-    # Checking reverse diagonal
-    if (game_array[0][2][2] == game_array[1][1][2] == game_array[2][0][2]) and game_array[0][2][2] != "":
-        display_message(game_array[0][2][2].upper() + " has won!")
-        return True
-
+    points = 0
+    for i in range(len(game_array)):    
+        if game_array[i][len(game_array)-1-i][2] == 'o':
+            points -= 1
+        elif game_array[i][len(game_array)-1-i][2] == 'x':
+            points += 1
+        if points == len(game_array):
+            display_message("X has won!")
+            return True
+        elif points == -len(game_array):
+            display_message("O has won!")
+            return True
     return False
 
 
@@ -136,15 +166,15 @@ def display_message(content):
 
 
 def render():
-    win.fill(WHITE)
-    draw_grid()
+    win.fill(WHITE)  # Clear the screen
+    draw_grid()  # Draw the grid
 
-    # Drawing X's and O's
+    # Draw X's and O's
     for image in images:
         x, y, IMAGE = image
         win.blit(IMAGE, (x - IMAGE.get_width() // 2, y - IMAGE.get_height() // 2))
 
-    pygame.display.update()
+    pygame.display.update()  # Update the display
 
 
 def main():

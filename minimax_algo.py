@@ -3,6 +3,7 @@ class TicTacToe:
         self.board = [cell[2] for row in board_2d for cell in row]
         self.human_player = "x"
         self.ai_player = "o"
+        self.size=len(board_2d)
 
     def available_moves(self):
         return [i for i, spot in enumerate(self.board) if spot == ""]
@@ -18,59 +19,88 @@ class TicTacToe:
 
     def check_winner(self):
         # Check rows
-        for i in range(0, 9, 3):
-            if self.board[i] == self.board[i + 1] == self.board[i + 2] != "":
-                return self.board[i]
+        for i in range(0, self.size**2, self.size):
+            points = 0 
+            for j in range(self.size):
+                if self.board[i+j] == 'x':
+                    points += 1
+                elif self.board[i+j] == 'o':
+                    points -= 1
+                if points == self.size:
+                    return 'x'
+                elif points == -self.size:
+                    return 'o'
 
-        # Check columns
-        for i in range(3):
-            if self.board[i] == self.board[i + 3] == self.board[i + 6] != "":
-                return self.board[i]
+        for i in range(self.size):
+            points = 0
+            for j in range(self.size):
+                if self.board[i+j*self.size] == 'x':
+                    points += 1
+                elif self.board[i+j*self.size] == 'o':
+                    points -= 1
+                if points == self.size:
+                    return 'x'
+                elif points == -self.size:
+                    return 'o'
 
         # Check diagonals
-        if self.board[0] == self.board[4] == self.board[8] != "":
-            return self.board[0]
-        if self.board[2] == self.board[4] == self.board[6] != "":
-            return self.board[2]
-
+        points = 0
+        for i in range(self.size):
+            if self.board[i*(self.size+1)] == 'x':
+                points += 1
+            elif self.board[i*(self.size+1)] == 'o':
+                points -= 1
+            if points == self.size:
+                return 'x'
+            elif points == -self.size:
+                return 'o'
+        points = 0
+        for i in range(1, self.size+1):
+            if self.board[i*(self.size-1)] == 'x':
+                points += 1
+            elif self.board[i*(self.size-1)] == 'o':
+                points -= 1
+            if points == self.size:
+                return 'x'
+            elif points == -self.size:
+                return 'o'
         return None
 
-    def minimax(self, depth, is_maximizing):
+    def minimax(self, depth, is_maximizing, alpha=float("-inf"), beta=float("inf")):
+        print(f"Depth: {depth}, Board: {self.board}, Is Maximizing: {is_maximizing}, Alpha: {alpha}, Beta: {beta}")
         # Base cases
         winner = self.check_winner()
         if winner == self.ai_player:
             return 1
-        if winner == self.human_player:
+        elif winner == self.human_player:
             return -1
-        if self.is_board_full():
+        elif self.is_board_full() or depth >= 4:  # Add a depth limit
             return 0
-        
-        # if it is the maximizing player's turn (AI), we want to maximize the score
+
+        # Maximizing player's turn (AI)
         if is_maximizing:
             best_score = float("-inf")
             for move in self.available_moves():
-                # Make a calculating move
                 self.board[move] = self.ai_player
-                # Recursively call minimax with the next depth and the minimizing player
-                score = self.minimax(depth + 1, False)
-                # Reset the move
-                self.board[move] = ""
-                # Update the best score
+                score = self.minimax(depth + 1, False, alpha, beta)
+                self.board[move] = ""  # Undo the move
                 best_score = max(score, best_score)
+                alpha = max(alpha, best_score)
+                if beta <= alpha:  # Prune the branch
+                    break
             return best_score
-        
+
+        # Minimizing player's turn (Human)
         else:
-            # if it is the minimizing player's turn (human), we want to minimize the score
             best_score = float("inf")
             for move in self.available_moves():
-                # Make a calculating move
                 self.board[move] = self.human_player
-                # Recursively call minimax with the next depth and the maximizing player
-                score = self.minimax(depth + 1, True)
-                # Reset the move
-                self.board[move] = ""
-                # Update the best score
+                score = self.minimax(depth + 1, True, alpha, beta)
+                self.board[move] = ""  # Undo the move
                 best_score = min(score, best_score)
+                beta = min(beta, best_score)
+                if beta <= alpha:  # Prune the branch
+                    break
             return best_score
 
     def get_best_move(self):
@@ -80,16 +110,14 @@ class TicTacToe:
         for move in self.available_moves():
             # Make a calculating move
             self.board[move] = self.ai_player
-            # Recursively call minimax with the next depth and the minimizing player
-            score = self.minimax(0, False)
+            # Recursively call minimax with alpha-beta pruning
+            score = self.minimax(0, False, float("-inf"), float("inf"))
             # Reset the move
             self.board[move] = ""
 
             # Update the best score
             if score > best_score:
                 best_score = score
-
-                # move is a val from 0-8
-                best_move = (move//3, move % 3)
+                best_move = (move // self.size, move % self.size)
 
         return best_move
